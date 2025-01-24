@@ -56,12 +56,8 @@ namespace ei8.Cortex.Diary.Plugins.Tree
                     break;
                 case ContextMenuOption.ExpandUntilPostsynapticExternalReferences:
                     this.ShowExpandModal();
-                    // TODO: make time limit configurable
-                    // TODO: encapsulate in TreeNeuronViewModel
-                    this.SelectedNeuron.ExpandPostsynapticsUntilExternalReferencesTimer.Interval = 10000;
-                    this.SelectedNeuron.ExpandPostsynapticsUntilExternalReferencesTimer.Elapsed -= this.ExpandPostsynapticsUntilExternalReferencesTimer_Elapsed;
-                    this.SelectedNeuron.ExpandPostsynapticsUntilExternalReferencesTimer.Elapsed += this.ExpandPostsynapticsUntilExternalReferencesTimer_Elapsed;
-                    this.SelectedNeuron.ExpandPostsynapticsUntilExternalReferencesTimer.Start();
+                    this.SelectedNeuron.ConfigureExpandTimer(10000, this.ExpandPostsynapticsUntilExternalReferencesTimer_Elapsed);
+                    this.SelectedNeuron.StartExpandTimer();
                     break;
             }
         }
@@ -82,15 +78,11 @@ namespace ei8.Cortex.Diary.Plugins.Tree
 
         private void CancelExpand()
         {
-            // TODO: encapsulate in TreeNeuronViewModel
-            if (
-                this.SelectedNeuron != null && 
-                this.SelectedNeuron.ExpandPostsynapticsUntilExternalReferencesTimer.Enabled
-            )
-                this.SelectedNeuron.ExpandPostsynapticsUntilExternalReferencesTimer.Stop();
-
+            if (this.SelectedNeuron != null)
+            {
+                this.SelectedNeuron.StopExpandTimer();
+            }
             this.IsExpandModalVisible = false;
-            // Add any additional cancel logic here
         }
 
         private void ShowExpandModal()
