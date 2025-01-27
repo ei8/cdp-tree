@@ -56,7 +56,7 @@ namespace ei8.Cortex.Diary.Plugins.Tree
                     break;
                 case ContextMenuOption.ExpandUntilPostsynapticExternalReferences:
                     this.ShowExpandModal();
-                    this.SelectedNeuron.ConfigureExpandTimer(10000, this.ExpandPostsynapticsUntilExternalReferencesTimer_Elapsed);
+                    this.SelectedNeuron.ConfigureExpandTimer(this.pluginSettingsService.ExpandTimeLimit, this.ExpandPostsynapticsUntilExternalReferencesTimer_Elapsed);
                     this.SelectedNeuron.StartExpandTimer();
                     break;
             }
