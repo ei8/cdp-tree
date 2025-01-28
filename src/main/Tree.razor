@@ -19,7 +19,7 @@
 @using System.Linq
 
 
-<ProcessBox IsExpandModalVisible="this.IsExpandModalVisible" OnCancelExpand="CancelExpand" />
+<ProcessBox IsVisible="this.IsExpandModalVisible" OnCancelProcess="CancelExpand" />
 
 <NeuronContextMenu @bind-SelectedOption="@this.SelectedOption" @bind-IsVisible="@this.IsContextMenuVisible" />
 <ConfirmationBox Title="Confirm Delete" Message='@this.ProcessSelectionTag("Are you sure you want to delete Neuron '{0}'?")' @bind-IsVisible="@this.IsConfirmVisible" OnConfirmCallback="@this.ConfirmDelete" />
