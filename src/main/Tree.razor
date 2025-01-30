@@ -18,6 +18,9 @@
 @using neurUL.Common.Http
 @using System.Linq
 
+
+<ProcessBox IsVisible="this.IsExpandModalVisible" OnCancelProcess="CancelExpand" />
+
 <NeuronContextMenu @bind-SelectedOption="@this.SelectedOption" @bind-IsVisible="@this.IsContextMenuVisible" />
 <ConfirmationBox Title="Confirm Delete" Message='@this.ProcessSelectionTag("Are you sure you want to delete Neuron '{0}'?")' @bind-IsVisible="@this.IsConfirmVisible" OnConfirmCallback="@this.ConfirmDelete" />
 <NeuronInfoBox @bind-SelectedNeuron="@this.SelectedNeuron" @bind-IsVisible="@this.IsInfoVisible" />
@@ -98,7 +101,8 @@ else
     <div class="content px-0">
         <div class="treecontent">
             <div class="treecontent-item content px-lg-4 px-3">
-                <TreeView AvatarUrl="@this.AvatarUrl" Children="@this.Children" @bind-SelectedNeuron="@this.SelectedNeuron" OnMenuRequested="@this.MenuRequested" OnInfoRequested="@this.InfoRequested" @bind-ControlsEnabled="@this.ControlsEnabled" @bind-RenderDirection="@this.RenderDirection" />
+                <TreeView AvatarUrl="@this.AvatarUrl" Children="@this.Children" @bind-SelectedNeuron="@this.SelectedNeuron" OnMenuRequested="@this.MenuRequested" OnInfoRequested="@this.InfoRequested"
+                    @bind-ControlsEnabled="@this.ControlsEnabled" @bind-RenderDirection="@this.RenderDirection" />
             </div>
             <div class="treecontent-item sticky-top" style="z-index:0">
                 <div class="sticky-top" style="z-index:0">
@@ -123,3 +127,4 @@ else
 </div>
 
 <audio id="sound" src=@(this.SettingsService.BasePath + "/media/alert.wav") />
+
