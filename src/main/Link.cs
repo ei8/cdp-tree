@@ -10,5 +10,6 @@ namespace ei8.Cortex.Diary.Plugins.Tree
         public int source { get; set; }
         public int target { get; set; }
         public string type { get; set; }
+        public decimal Terminal { get; set; }
     }
 }
