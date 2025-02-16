@@ -480,7 +480,7 @@ namespace ei8.Cortex.Diary.Plugins.Tree
                     var ttarget = distinctNodes.FindIndex(n => n.id == c.Neuron.Terminal.PostsynapticNeuronId);
                     var typeVal = (c.Neuron.Terminal.Strength == "1" ? "full" : "partial") + (c.Neuron.Terminal.Effect == "-1" ? "inhibit" : "excite");
                     if (!links.Any(gl => gl.source == tsource && gl.target == ttarget))
-                        links.Add(new Link() { source = tsource, target = ttarget, type = typeVal,Terminal = Convert.ToDecimal(c.Neuron.Terminal.Strength)});
+                        links.Add(new Link() { source = tsource, target = ttarget, type = typeVal,Strength = Convert.ToDecimal(c.Neuron.Terminal.Strength)});
                 }
             });
 
