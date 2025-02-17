@@ -88,6 +88,22 @@ function displayGraph(nodes, links) {
             .attr("class", function (d) { return "link " + d.type; })
             .attr("marker-end", function (d) { return "url(#" + d.type + ")"; });
 
+        // Define linkText variable
+        var linkText = container.append("g").selectAll("text")
+            .data(force.links())
+            .enter().append("text")
+            .attr("class", "link-label")
+            .attr("dy", -5) // Adjust the position above the line
+            .text(function(d) { 
+                if (d.strength < 1 && d.type.includes("excite")) {
+                    return d.strength;
+                } else if (d.type.includes("inhibit")) {
+                    return -d.strength;
+                } else {
+                    return '';
+                }
+            });
+
         node = container.append("g")
             .attr("class", "nodes")
             .selectAll(".node")
@@ -140,6 +156,11 @@ function displayGraph(nodes, links) {
         path.attr("d", linkArc);
         node.attr("transform", transform);
         text.attr("transform", transform);
+
+        // Update the position of the text
+        container.selectAll(".link-label").attr("transform", function(d) {
+            return "translate(" + ((d.source.x + d.target.x) / 2) + "," + ((d.source.y + d.target.y) / 2) + ")";
+        });
     }
 
     function linkArc(d) {
