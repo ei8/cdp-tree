@@ -38,7 +38,10 @@
         </button>
         <div class="col p-0">
             <input class="form-control form-control-sm ml-1 rounded inputEditor" id="AvatarUrl" placeholder="Avatar URL" @bind="AvatarUrl" @onkeyup="@this.OnKeyPress" />
-            <button class="inputEditorButton" @onclick="this.ShowAvatarEditorBox"><i class="fas fa-edit"></i></button>
+            @if (AvatarUrl != null && AvatarUrl.Contains("cortex/neurons"))
+            {
+                <button class="inputEditorButton" @onclick="this.ShowAvatarEditorBox"><i class="fas fa-edit"></i></button>
+            }
         </div>
         <button class="btn btn-light btn-sm rounded-circle ml-1" @onclick="this.LoadGraph" style="height:32px; width:32px" title="Load Graph">
             <Blazorise.Icon Name="FontAwesomeIcons.CodeBranch" />
