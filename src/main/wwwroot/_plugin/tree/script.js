@@ -95,10 +95,10 @@ function displayGraph(nodes, links) {
             .attr("class", "link-label")
             .attr("dy", -5) // Adjust the position above the line
             .text(function(d) { 
-                if (d.strength < 1 && d.type.includes("excite")) {
-                    return d.strength;
+                if (d.Strength < 1 && d.type.includes("excite")) {
+                    return d.Strength;
                 } else if (d.type.includes("inhibit")) {
-                    return -d.strength;
+                    return -d.Strength;
                 } else {
                     return '';
                 }
