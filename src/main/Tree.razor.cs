@@ -64,7 +64,11 @@ namespace ei8.Cortex.Diary.Plugins.Tree
 
         private void ExpandPostsynapticsUntilExternalReferencesTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
-            this.CancelExpand();
+            this.InvokeAsync(() =>
+            {
+                this.CancelExpand();
+                this.StateHasChanged();
+            });
         }
 
         private async void OnKeyPress(KeyboardEventArgs e)
