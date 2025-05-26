@@ -59,6 +59,11 @@ namespace ei8.Cortex.Diary.Plugins.Tree
                     this.SelectedNeuron.ConfigureExpandTimer(this.pluginSettingsService.ExpandTimeLimit, this.ExpandPostsynapticsUntilExternalReferencesTimer_Elapsed);
                     this.SelectedNeuron.StartExpandTimer();
                     break;
+                case ContextMenuOption.ExpandUntilFarthestPresynaptic:
+                    this.ShowExpandModal();
+                    this.SelectedNeuron.ConfigureExpandUntilFarthestPresynapticTimer(this.pluginSettingsService.ExpandTimeLimit, this.ExpandUntilFarthestPresynapticTimer_Elapsed);
+                    this.SelectedNeuron.StartExpandUntilFarthestPresynapticTimer();
+                    break;
             }
         }
 
@@ -69,6 +74,40 @@ namespace ei8.Cortex.Diary.Plugins.Tree
                 this.CancelExpand();
                 this.StateHasChanged();
             });
+        }
+
+        private async void ExpandUntilFarthestPresynapticTimer_Elapsed(object sender, ElapsedEventArgs e)
+        {
+            try
+            {
+                if (this.SelectedNeuron != null)
+                {
+                    // if children contains selected neuron
+                    if (this.Children.Any(x => x.Neuron.Id == this.SelectedNeuron.Neuron.Id))
+                    {
+                        if (this.SelectedNeuron.Neuron.Type != Library.Common.RelativeType.Postsynaptic)
+                        {
+                            await InvokeAsync(() => this.SelectedNeuron.Toggle());
+                        }
+                    }
+                    else
+                    {
+                        foreach (var child in this.Children)
+                        {
+                            if (this.SelectedNeuron.IsPresynapticChild(child.Neuron.Id) &&
+                                child.Neuron.Type != Library.Common.RelativeType.Postsynaptic)
+                            {
+                                await InvokeAsync(() => child.Toggle());
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle or log the exception as needed
+                Console.WriteLine($"Error in ExpandUntilFarthestPresynapticTimer_Elapsed: {ex.Message}");
+            }
         }
 
         private async void OnKeyPress(KeyboardEventArgs e)
@@ -85,6 +124,7 @@ namespace ei8.Cortex.Diary.Plugins.Tree
             if (this.SelectedNeuron != null)
             {
                 this.SelectedNeuron.StopExpandTimer();
+                this.SelectedNeuron.StopExpandUntilFarthestPresynapticTimer();
             }
             this.IsExpandModalVisible = false;
         }
