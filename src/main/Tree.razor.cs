@@ -56,13 +56,13 @@ namespace ei8.Cortex.Diary.Plugins.Tree
                     break;
                 case ContextMenuOption.ExpandUntilPostsynapticExternalReferences:
                     this.ShowExpandModal();
-                    this.SelectedNeuron.ConfigureExpandTimer(this.pluginSettingsService.ExpandTimeLimit, this.ExpandPostsynapticsUntilExternalReferencesTimer_Elapsed);
-                    this.SelectedNeuron.StartExpandTimer();
+                    this.SelectedNeuron.ConfigureExpansionTimer(ExpansionType.PostsynapticUntilExternalReferences,this.pluginSettingsService.ExpandTimeLimit, this.ExpandPostsynapticsUntilExternalReferencesTimer_Elapsed);
+                    this.SelectedNeuron.StartExpansionTimer();
                     break;
                 case ContextMenuOption.ExpandUntilFarthestPresynaptic:
                     this.ShowExpandModal();
-                    this.SelectedNeuron.ConfigureExpandUntilFarthestPresynapticTimer(this.pluginSettingsService.ExpandTimeLimit, this.ExpandUntilFarthestPresynapticTimer_Elapsed);
-                    this.SelectedNeuron.StartExpandUntilFarthestPresynapticTimer();
+                    this.SelectedNeuron.ConfigureExpansionTimer(ExpansionType.FarthestPresynaptic,this.pluginSettingsService.ExpandTimeLimit, this.ExpandUntilFarthestPresynapticTimer_Elapsed);
+                    this.SelectedNeuron.StartExpansionTimer();
                     break;
             }
         }
@@ -123,8 +123,7 @@ namespace ei8.Cortex.Diary.Plugins.Tree
         {
             if (this.SelectedNeuron != null)
             {
-                this.SelectedNeuron.StopExpandTimer();
-                this.SelectedNeuron.StopExpandUntilFarthestPresynapticTimer();
+                this.SelectedNeuron.StopExpansionTimer();
             }
             this.IsExpandModalVisible = false;
         }
