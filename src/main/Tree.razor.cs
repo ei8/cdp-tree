@@ -56,19 +56,39 @@ namespace ei8.Cortex.Diary.Plugins.Tree
                     break;
                 case ContextMenuOption.ExpandUntilPostsynapticExternalReferences:
                     this.ShowExpandModal();
-                    this.SelectedNeuron.ConfigureExpandTimer(this.pluginSettingsService.ExpandTimeLimit, this.ExpandPostsynapticsUntilExternalReferencesTimer_Elapsed);
-                    this.SelectedNeuron.StartExpandTimer();
+                    this.SelectedNeuron.ConfigureExpansionTimer(
+                        ExpansionType.PostsynapticUntilExternalReferences,
+                        this.pluginSettingsService.ExpandTimeLimit,
+                        this.ExpansionTimer_Elapsed
+                    );
+                    this.SelectedNeuron.StartExpansionTimer();
+                    break;
+                case ContextMenuOption.ExpandUntilFarthestPresynaptic:
+                    this.ShowExpandModal();
+                    this.SelectedNeuron.ConfigureExpansionTimer(
+                        ExpansionType.FarthestPresynaptic,
+                        this.pluginSettingsService.ExpandTimeLimit,
+                        this.ExpansionTimer_Elapsed
+                    );
+                    this.SelectedNeuron.StartExpansionTimer();
                     break;
             }
         }
 
-        private void ExpandPostsynapticsUntilExternalReferencesTimer_Elapsed(object sender, ElapsedEventArgs e)
+        private async void ExpansionTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
-            this.InvokeAsync(() =>
+            try
             {
-                this.CancelExpand();
-                this.StateHasChanged();
-            });
+                this.InvokeAsync(() =>
+                {
+                    this.CancelExpand();
+                    this.StateHasChanged();
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in ExpansionTimer_Elapsed: {ex.Message}");
+            }
         }
 
         private async void OnKeyPress(KeyboardEventArgs e)
@@ -78,13 +98,13 @@ namespace ei8.Cortex.Diary.Plugins.Tree
                 if (!string.IsNullOrEmpty(this.AvatarUrl))
                     await this.Reload();
             }
-       }
+        }
 
         private void CancelExpand()
         {
             if (this.SelectedNeuron != null)
             {
-                this.SelectedNeuron.StopExpandTimer();
+                this.SelectedNeuron.StopExpansionTimer();
             }
             this.IsExpandModalVisible = false;
         }

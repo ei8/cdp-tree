@@ -13,6 +13,7 @@ namespace ei8.Cortex.Diary.Plugins.Tree
         Edit,
         Delete,
         AddRelative,
-        ExpandUntilPostsynapticExternalReferences
+        ExpandUntilPostsynapticExternalReferences,
+        ExpandUntilFarthestPresynaptic
     }
 }
