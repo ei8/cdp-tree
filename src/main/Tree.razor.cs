@@ -56,75 +56,107 @@ namespace ei8.Cortex.Diary.Plugins.Tree
                     break;
                 case ContextMenuOption.ExpandUntilPostsynapticExternalReferences:
                     this.ShowExpandModal();
-                    this.SelectedNeuron.ConfigureExpandTimer(this.pluginSettingsService.ExpandTimeLimit, this.ExpandPostsynapticsUntilExternalReferencesTimer_Elapsed);
-                    this.SelectedNeuron.StartExpandTimer();
+                    this.SelectedNeuron.ConfigureExpansionTimer(
+                        ExpansionType.PostsynapticUntilExternalReferences,
+                        this.pluginSettingsService.ExpandTimeLimit,
+                        this.ExpansionTimer_Elapsed
+                    );
+                    this.SelectedNeuron.StartExpansionTimer();
                     break;
                 case ContextMenuOption.ExpandUntilFarthestPresynaptic:
                     this.ShowExpandModal();
-                    this.SelectedNeuron.ConfigureExpandUntilFarthestPresynapticTimer(this.pluginSettingsService.ExpandTimeLimit, this.ExpandUntilFarthestPresynapticTimer_Elapsed);
-                    this.SelectedNeuron.StartExpandUntilFarthestPresynapticTimer();
+                    this.SelectedNeuron.ConfigureExpansionTimer(
+                        ExpansionType.FarthestPresynaptic,
+                        this.pluginSettingsService.ExpandTimeLimit,
+                        this.ExpansionTimer_Elapsed
+                    );
+                    this.SelectedNeuron.StartExpansionTimer();
                     break;
             }
         }
 
-        private void ExpandPostsynapticsUntilExternalReferencesTimer_Elapsed(object sender, ElapsedEventArgs e)
-        {
-            this.InvokeAsync(() =>
-            {
-                this.CancelExpand();
-                this.StateHasChanged();
-            });
-        }
-
-        private async void ExpandUntilFarthestPresynapticTimer_Elapsed(object sender, ElapsedEventArgs e)
+        private async void ExpansionTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
             try
             {
                 if (this.SelectedNeuron != null)
                 {
-                    // if children contains selected neuron
-                    if (this.Children.Any(x => x.Neuron.Id == this.SelectedNeuron.Neuron.Id))
+                    switch (this.SelectedNeuron.CurrentExpansionType)
                     {
-                        if (this.SelectedNeuron.Neuron.Type != Library.Common.RelativeType.Postsynaptic)
-                        {
-                            await InvokeAsync(() => this.SelectedNeuron.Toggle());
-                        }
-                    }
-                    else
-                    {
-                        foreach (var child in this.Children)
-                        {
-                            if (this.SelectedNeuron.IsPresynapticChild(child.Neuron.Id) &&
-                                child.Neuron.Type != Library.Common.RelativeType.Postsynaptic)
-                            {
-                                await InvokeAsync(() => child.Toggle());
-                            }
-                        }
+                        case ExpansionType.PostsynapticUntilExternalReferences:
+                            await HandlePostsynapticExpansion();
+                            break;
+                        case ExpansionType.FarthestPresynaptic:
+                            await HandlePresynapticExpansion();
+                            break;
                     }
                 }
             }
             catch (Exception ex)
             {
-                // Handle or log the exception as needed
-                Console.WriteLine($"Error in ExpandUntilFarthestPresynapticTimer_Elapsed: {ex.Message}");
+                Console.WriteLine($"Error in ExpansionTimer_Elapsed: {ex.Message}");
+            }
+            finally
+            {
+                this.InvokeAsync(() =>
+                {
+                    this.CancelExpand();
+                    this.StateHasChanged();
+                });
             }
         }
 
-        private async void OnKeyPress(KeyboardEventArgs e)
+        private async Task HandlePostsynapticExpansion()
         {
-            if (e.Code == "Enter" || e.Code == "NumpadEnter")
+            // if children contains selected neuron
+            if (this.Children.Any(x => x.Neuron.Id == this.SelectedNeuron.Neuron.Id))
             {
-                if (!string.IsNullOrEmpty(this.AvatarUrl))
-                    await this.Reload();
+                if (this.SelectedNeuron.Neuron.Type != Library.Common.RelativeType.Presynaptic)
+                {
+                    await InvokeAsync(() => this.SelectedNeuron.Toggle());
+                }
             }
-       }
+            else
+            {
+                foreach (var child in this.Children)
+                {
+                    if (this.SelectedNeuron.IsChild(child.Neuron.Id) &&
+                        child.Neuron.Type != Library.Common.RelativeType.Presynaptic)
+                    {
+                        await InvokeAsync(() => child.Toggle());
+                    }
+                }
+            }
+        }
+
+        private async Task HandlePresynapticExpansion()
+        {
+            // if children contains selected neuron
+            if (this.Children.Any(x => x.Neuron.Id == this.SelectedNeuron.Neuron.Id))
+            {
+                if (this.SelectedNeuron.Neuron.Type != Library.Common.RelativeType.Postsynaptic)
+                {
+                    await InvokeAsync(() => this.SelectedNeuron.Toggle());
+                }
+            }
+            else
+            {
+                foreach (var child in this.Children)
+                {
+                    if (this.SelectedNeuron.IsPresynapticChild(child.Neuron.Id) &&
+                        child.Neuron.Type != Library.Common.RelativeType.Postsynaptic)
+                    {
+                        await InvokeAsync(() => child.Toggle());
+                    }
+                }
+            }
+        }
 
         private void CancelExpand()
         {
             if (this.SelectedNeuron != null)
             {
-                this.SelectedNeuron.StopExpandTimer();
-                this.SelectedNeuron.StopExpandUntilFarthestPresynapticTimer();
+                this.SelectedNeuron.StopExpansionTimer();
             }
             this.IsExpandModalVisible = false;
         }
