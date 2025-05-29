@@ -79,76 +79,24 @@ namespace ei8.Cortex.Diary.Plugins.Tree
         {
             try
             {
-                if (this.SelectedNeuron != null)
-                {
-                    switch (this.SelectedNeuron.CurrentExpansionType)
-                    {
-                        case ExpansionType.PostsynapticUntilExternalReferences:
-                            await HandlePostsynapticExpansion();
-                            break;
-                        case ExpansionType.FarthestPresynaptic:
-                            await HandlePresynapticExpansion();
-                            break;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error in ExpansionTimer_Elapsed: {ex.Message}");
-            }
-            finally
-            {
                 this.InvokeAsync(() =>
                 {
                     this.CancelExpand();
                     this.StateHasChanged();
                 });
             }
-        }
-
-        private async Task HandlePostsynapticExpansion()
-        {
-            // if children contains selected neuron
-            if (this.Children.Any(x => x.Neuron.Id == this.SelectedNeuron.Neuron.Id))
+            catch (Exception ex)
             {
-                if (this.SelectedNeuron.Neuron.Type != Library.Common.RelativeType.Presynaptic)
-                {
-                    await InvokeAsync(() => this.SelectedNeuron.Toggle());
-                }
-            }
-            else
-            {
-                foreach (var child in this.Children)
-                {
-                    if (this.SelectedNeuron.IsChild(child.Neuron.Id) &&
-                        child.Neuron.Type != Library.Common.RelativeType.Presynaptic)
-                    {
-                        await InvokeAsync(() => child.Toggle());
-                    }
-                }
+                Console.WriteLine($"Error in ExpansionTimer_Elapsed: {ex.Message}");
             }
         }
 
-        private async Task HandlePresynapticExpansion()
+        private async void OnKeyPress(KeyboardEventArgs e)
         {
-            // if children contains selected neuron
-            if (this.Children.Any(x => x.Neuron.Id == this.SelectedNeuron.Neuron.Id))
+            if (e.Code == "Enter" || e.Code == "NumpadEnter")
             {
-                if (this.SelectedNeuron.Neuron.Type != Library.Common.RelativeType.Postsynaptic)
-                {
-                    await InvokeAsync(() => this.SelectedNeuron.Toggle());
-                }
-            }
-            else
-            {
-                foreach (var child in this.Children)
-                {
-                    if (this.SelectedNeuron.IsPresynapticChild(child.Neuron.Id) &&
-                        child.Neuron.Type != Library.Common.RelativeType.Postsynaptic)
-                    {
-                        await InvokeAsync(() => child.Toggle());
-                    }
-                }
+                if (!string.IsNullOrEmpty(this.AvatarUrl))
+                    await this.Reload();
             }
         }
 
