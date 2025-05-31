@@ -1,5 +1,6 @@
 using Blazored.Toast.Services;
 using Blazorise;
+using ei8.Cortex.Diary.Application.Mirrors;
 using ei8.Cortex.Diary.Application.Neurons;
 using ei8.Cortex.Diary.Application.Settings;
 using ei8.Cortex.Diary.Application.Subscriptions;
@@ -30,6 +31,8 @@ namespace ei8.Cortex.Diary.Plugins.Tree
         private Timer refreshTimer;
         private DotNetObjectReference<Tree>? dotNetHelper;
         private TreePluginSettingsService pluginSettingsService;
+        private IEnumerable<MirrorConfigFile> mirrorConfigFiles;
+
         private bool IsExpandModalVisible { get; set; }
 
         public Tree()
@@ -266,7 +269,14 @@ namespace ei8.Cortex.Diary.Plugins.Tree
                             await this.JsRuntime.InvokeAsync<string>("PlaySound");
 
                         this.NewItemsCount += newNeurons.Count();
-                        newNeurons.ToList().ForEach(n => this.Children.Add(new TreeNeuronViewModel(new Neuron(n), this.AvatarUrl, this.NeuronQueryService)));
+                        newNeurons.ToList().ForEach(n => this.Children.Add(
+                            new TreeNeuronViewModel(
+                                new Neuron(n), 
+                                this.AvatarUrl, 
+                                this.NeuronQueryService,
+                                this.GetMirrorConfigFiles()
+                            )
+                        ));
                         await this.InvokeAsync(() => this.StateHasChanged());
                     }
                 }
@@ -387,7 +397,12 @@ namespace ei8.Cortex.Diary.Plugins.Tree
                     await this.SetReloading(true);
                     this.Children.Clear();
                     var ns = await Tree.GetOrderedNeurons(this);
-                    var children = ns.Select(nr => new TreeNeuronViewModel(new Neuron(nr), this.AvatarUrl, this.NeuronQueryService));
+                    var children = ns.Select(nr => new TreeNeuronViewModel(
+                        new Library.Common.Neuron(nr),
+                        this.AvatarUrl,
+                        this.NeuronQueryService,
+                        this.GetMirrorConfigFiles()
+                    ));
                     ((List<TreeNeuronViewModel>)this.Children).AddRange(children);
                     this.NewItemsCount = 0;
 
@@ -409,6 +424,14 @@ namespace ei8.Cortex.Diary.Plugins.Tree
                     await this.LoadGraph();
                 }
             );
+        }
+
+        private IEnumerable<MirrorConfigFile> GetMirrorConfigFiles()
+        {
+            if (this.mirrorConfigFiles == null)
+                this.mirrorConfigFiles = this.MirrorQueryService.GetAll();
+
+            return this.mirrorConfigFiles;
         }
 
         private async Task SetReloading(bool value)
@@ -489,7 +512,14 @@ namespace ei8.Cortex.Diary.Plugins.Tree
 
         private static void ExtractNodes(IEnumerable<TreeNeuronViewModel> children, List<Node> allNodes)
         {
-            allNodes.AddRange(children.Select(c => new Node { id = c.Neuron.Id, tag = c.Neuron.Tag }).ToArray());
+            allNodes.AddRange(children.Select(c => new Node { 
+                id = c.Neuron.Id, 
+                tag = !string.IsNullOrWhiteSpace(c.Neuron.Tag) ? 
+                    c.Neuron.Tag : 
+                    !string.IsNullOrWhiteSpace(c.Neuron.ExternalReferenceUrl) ?
+                        c.GetMirrorKeys().FirstOrDefault()?.Item1 :
+                        string.Empty
+            }).ToArray());
 
             children.ToList().ForEach(c => Tree.ExtractNodes(c.Children, allNodes));
         }
@@ -647,9 +677,7 @@ namespace ei8.Cortex.Diary.Plugins.Tree
         public ISubscriptionQueryService SubscriptionsQueryService { get; set; }
         [Parameter]
         public IPluginSettingsService PluginSettingsService { get => this.pluginSettingsService; set { this.pluginSettingsService = (TreePluginSettingsService) value; } }
-
-        
-
-        
+        [Parameter]
+        public IMirrorQueryService MirrorQueryService { get; set; }
     }
 }
