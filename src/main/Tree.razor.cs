@@ -29,6 +29,7 @@ namespace ei8.Cortex.Diary.Plugins.Tree
         private bool reloading = true;
         private Dropdown optionsDropdown;
         private Timer refreshTimer;
+        private Timer expansionTimer;
         private DotNetObjectReference<Tree>? dotNetHelper;
         private TreePluginSettingsService pluginSettingsService;
         private IEnumerable<MirrorConfigFile> mirrorConfigFiles;
@@ -38,6 +39,7 @@ namespace ei8.Cortex.Diary.Plugins.Tree
         public Tree()
         {
             this.internalSelectedOptionChanged = EventCallback.Factory.Create(this, new Func<ContextMenuOption, Task>(this.HandleSelectionOptionChanged));
+            this.expansionTimer = new Timer();
         }
 
         private async Task HandleSelectionOptionChanged(ContextMenuOption value)
@@ -59,6 +61,7 @@ namespace ei8.Cortex.Diary.Plugins.Tree
                     break;
                 case ContextMenuOption.ExpandUntilPostsynapticExternalReferences:
                     this.ShowExpandModal();
+                    this.SelectedNeuron.SetExpansionTimer(this.expansionTimer);
                     this.SelectedNeuron.ConfigureExpansionTimer(
                         ExpansionType.PostsynapticUntilExternalReferences,
                         this.pluginSettingsService.ExpandTimeLimit,
@@ -68,6 +71,7 @@ namespace ei8.Cortex.Diary.Plugins.Tree
                     break;
                 case ContextMenuOption.ExpandUntilFarthestPresynaptic:
                     this.ShowExpandModal();
+                    this.SelectedNeuron.SetExpansionTimer(this.expansionTimer);
                     this.SelectedNeuron.ConfigureExpansionTimer(
                         ExpansionType.FarthestPresynaptic,
                         this.pluginSettingsService.ExpandTimeLimit,
@@ -292,6 +296,7 @@ namespace ei8.Cortex.Diary.Plugins.Tree
             // During prerender, this component is rendered without calling OnAfterRender and then immediately disposed
             // this mean timer will be null so we have to check for null or use the Null-conditional operator ?
             this.refreshTimer?.Dispose();
+            this.expansionTimer?.Dispose();
         }
 
         private async static Task<IEnumerable<Neuron>> GetOrderedNeurons(Tree value)
