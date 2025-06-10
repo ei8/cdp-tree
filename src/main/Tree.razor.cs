@@ -454,39 +454,6 @@ namespace ei8.Cortex.Diary.Plugins.Tree
             }
         }
 
-        //private async void OnTimerInterval(object sender, ElapsedEventArgs e)
-        //{
-        //    if (this.Children.Count() > 0)
-        //    {
-        //        try
-        //        {
-        //            var ns = await Tree.GetOrderedNeurons(this);
-        //            var currentLastIndex = ns.ToList().FindLastIndex(nr => nr.Id == this.Children.Last().Neuron.Id);
-        //            var newNeurons = ns.Where((n, i) => i > currentLastIndex && !this.Children.Any(nvm => nvm.Neuron.Id == n.Id));
-        //            if (newNeurons.Count() > 0)
-        //            {
-        //                if (this.NewItemsCount == 0)
-        //                    await this.JsRuntime.InvokeAsync<string>("PlaySound");
-
-        //                this.NewItemsCount += newNeurons.Count();
-        //                newNeurons.ToList().ForEach(n => this.Children.Add(
-        //                    new TreeNeuronViewModel(
-        //                        new Neuron(n),
-        //                        this.AvatarUrl,
-        //                        this.NeuronQueryService,
-        //                        this.GetMirrorConfigFiles()
-        //                    )
-        //                ));
-        //                await this.InvokeAsync(() => this.StateHasChanged());
-        //            }
-        //        }
-        //        catch (Exception ex)
-        //        {
-        //            this.ToastService.ShowError(ex.ToString());
-        //        }
-        //    }
-        //}
-
         private async void MenuRequested() => this.IsContextMenuVisible = true;
 
         private async void InfoRequested() => this.IsInfoVisible = true;
