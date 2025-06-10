@@ -29,6 +29,7 @@ namespace ei8.Cortex.Diary.Plugins.Tree
         private bool reloading = true;
         private Dropdown optionsDropdown;
         private Timer refreshTimer;
+        private Timer expansionTimer;
         private DotNetObjectReference<Tree>? dotNetHelper;
         private TreePluginSettingsService pluginSettingsService;
         private IEnumerable<MirrorConfigFile> mirrorConfigFiles;
@@ -38,6 +39,7 @@ namespace ei8.Cortex.Diary.Plugins.Tree
         public Tree()
         {
             this.internalSelectedOptionChanged = EventCallback.Factory.Create(this, new Func<ContextMenuOption, Task>(this.HandleSelectionOptionChanged));
+            this.expansionTimer = new Timer();
         }
 
         private async Task HandleSelectionOptionChanged(ContextMenuOption value)
@@ -60,6 +62,7 @@ namespace ei8.Cortex.Diary.Plugins.Tree
                 case ContextMenuOption.ExpandUntilPostsynapticExternalReferences:
                     this.ShowExpandModal();
                     this.SelectedNeuron.ConfigureExpansionTimer(
+                        this.expansionTimer,
                         ExpansionType.PostsynapticUntilExternalReferences,
                         this.pluginSettingsService.ExpandTimeLimit,
                         this.ExpansionTimer_Elapsed
@@ -69,6 +72,7 @@ namespace ei8.Cortex.Diary.Plugins.Tree
                 case ContextMenuOption.ExpandUntilFarthestPresynaptic:
                     this.ShowExpandModal();
                     this.SelectedNeuron.ConfigureExpansionTimer(
+                        this.expansionTimer,
                         ExpansionType.FarthestPresynaptic,
                         this.pluginSettingsService.ExpandTimeLimit,
                         this.ExpansionTimer_Elapsed
@@ -271,8 +275,8 @@ namespace ei8.Cortex.Diary.Plugins.Tree
                         this.NewItemsCount += newNeurons.Count();
                         newNeurons.ToList().ForEach(n => this.Children.Add(
                             new TreeNeuronViewModel(
-                                new Neuron(n), 
-                                this.AvatarUrl, 
+                                new Neuron(n),
+                                this.AvatarUrl,
                                 this.NeuronQueryService,
                                 this.GetMirrorConfigFiles()
                             )
@@ -292,6 +296,7 @@ namespace ei8.Cortex.Diary.Plugins.Tree
             // During prerender, this component is rendered without calling OnAfterRender and then immediately disposed
             // this mean timer will be null so we have to check for null or use the Null-conditional operator ?
             this.refreshTimer?.Dispose();
+            this.expansionTimer?.Dispose();
         }
 
         private async static Task<IEnumerable<Neuron>> GetOrderedNeurons(Tree value)
@@ -512,10 +517,11 @@ namespace ei8.Cortex.Diary.Plugins.Tree
 
         private static void ExtractNodes(IEnumerable<TreeNeuronViewModel> children, List<Node> allNodes)
         {
-            allNodes.AddRange(children.Select(c => new Node { 
-                id = c.Neuron.Id, 
-                tag = !string.IsNullOrWhiteSpace(c.Neuron.Tag) ? 
-                    c.Neuron.Tag : 
+            allNodes.AddRange(children.Select(c => new Node
+            {
+                id = c.Neuron.Id,
+                tag = !string.IsNullOrWhiteSpace(c.Neuron.Tag) ?
+                    c.Neuron.Tag :
                     !string.IsNullOrWhiteSpace(c.Neuron.ExternalReferenceUrl) ?
                         c.GetMirrorKeys().FirstOrDefault()?.Item1 :
                         string.Empty
@@ -534,7 +540,7 @@ namespace ei8.Cortex.Diary.Plugins.Tree
                     var ttarget = distinctNodes.FindIndex(n => n.id == c.Neuron.Terminal.PostsynapticNeuronId);
                     var typeVal = (c.Neuron.Terminal.Strength == "1" ? "full" : "partial") + (c.Neuron.Terminal.Effect == "-1" ? "inhibit" : "excite");
                     if (!links.Any(gl => gl.source == tsource && gl.target == ttarget))
-                        links.Add(new Link() { source = tsource, target = ttarget, type = typeVal,Strength = Convert.ToDecimal(c.Neuron.Terminal.Strength)});
+                        links.Add(new Link() { source = tsource, target = ttarget, type = typeVal, Strength = Convert.ToDecimal(c.Neuron.Terminal.Strength) });
                 }
             });
 
@@ -608,7 +614,7 @@ namespace ei8.Cortex.Diary.Plugins.Tree
                         throw new InvalidOperationException("User not signed-in.");
 
                     return result;
-                },                
+                },
                 () => "E-mail Subscription" + emailDescription,
                 () => this.optionsDropdown.Hide()
             );
@@ -657,26 +663,26 @@ namespace ei8.Cortex.Diary.Plugins.Tree
 
         [Parameter]
         public IHttpContextAccessor HttpContextAccessor { get; set; }
-        [Parameter] 
+        [Parameter]
         public INeuronQueryService NeuronQueryService { get; set; }
-        [Parameter] 
+        [Parameter]
         public INeuronApplicationService NeuronApplicationService { get; set; }
-        [Parameter] 
+        [Parameter]
         public ITerminalApplicationService TerminalApplicationService { get; set; }
-        [Parameter] 
+        [Parameter]
         public IToastService ToastService { get; set; }
-        [Parameter] 
+        [Parameter]
         public NavigationManager NavigationManager { get; set; }
-        [Parameter] 
+        [Parameter]
         public IJSRuntime JsRuntime { get; set; }
-        [Parameter] 
+        [Parameter]
         public ISettingsService SettingsService { get; set; }
         [Parameter]
         public ISubscriptionApplicationService SubscriptionApplicationService { get; set; }
         [Parameter]
         public ISubscriptionQueryService SubscriptionsQueryService { get; set; }
         [Parameter]
-        public IPluginSettingsService PluginSettingsService { get => this.pluginSettingsService; set { this.pluginSettingsService = (TreePluginSettingsService) value; } }
+        public IPluginSettingsService PluginSettingsService { get => this.pluginSettingsService; set { this.pluginSettingsService = (TreePluginSettingsService)value; } }
         [Parameter]
         public IMirrorQueryService MirrorQueryService { get; set; }
     }
