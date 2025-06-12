@@ -409,6 +409,7 @@ namespace ei8.Cortex.Diary.Plugins.Tree
                         this.GetMirrorConfigFiles()
                     ));
                     ((List<TreeNeuronViewModel>)this.Children).AddRange(children);
+                    SetColor();
                     this.NewItemsCount = 0;
 
                     if (this.RenderDirection == RenderDirectionValue.BottomToTop)
@@ -429,6 +430,17 @@ namespace ei8.Cortex.Diary.Plugins.Tree
                     await this.LoadGraph();
                 }
             );
+        }
+
+        private void SetColor()
+        {
+            for (int i = 0; i < this.Children.Count; i++)
+            {
+                if (i % 2 == 0)
+                    this.Children[i].Color = Port.Adapter.UI.ViewModels.Color.White;
+                else
+                    this.Children[i].Color = Port.Adapter.UI.ViewModels.Color.Blue;
+            }
         }
 
         private IEnumerable<MirrorConfigFile> GetMirrorConfigFiles()
