@@ -60,15 +60,15 @@ namespace ei8.Cortex.Diary.Plugins.Tree
                     this.EditNeuron = this.SelectedNeuron.Neuron;
                     break;
                 case ContextMenuOption.ExpandUntilPostsynapticExternalReferences:
-                    this.Expansion(ExpansionType.PostsynapticUntilExternalReferences);
+                    this.ExpandSelectedNeuron(ExpansionType.PostsynapticUntilExternalReferences);
                     break;
                 case ContextMenuOption.ExpandUntilFarthestPresynaptic:
-                    this.Expansion(ExpansionType.FarthestPresynaptic);
+                    this.ExpandSelectedNeuron(ExpansionType.FarthestPresynaptic);
                     break;
             }
         }
 
-        private void Expansion(ExpansionType expansionType)
+        private void ExpandSelectedNeuron(ExpansionType expansionType)
         {
             this.ShowExpandModal();
             this.SelectedNeuron.ConfigureExpansionTimer(
@@ -235,7 +235,7 @@ namespace ei8.Cortex.Diary.Plugins.Tree
 
                         Helper.ReinitializeOption(o => this.SelectedOption = o);
 
-                        if (query.TryGetValue("eupm", out var encodedEUPM) && this.Children.Any(x=>x.Neuron.Id == encodedEUPM))
+                        if (query.TryGetValue(Constants.Eupm, out var encodedEUPM) && this.Children.Any(x => x.Neuron.Id == encodedEUPM))
                         {
                             this.SelectedNeuron = this.Children.FirstOrDefault(x => x.Neuron.Id == encodedEUPM);
                             this.Expansion(ExpansionType.PostsynapticUntilExternalReferences);
