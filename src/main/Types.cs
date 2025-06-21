@@ -16,4 +16,8 @@ namespace ei8.Cortex.Diary.Plugins.Tree
         ExpandUntilPostsynapticExternalReferences,
         ExpandUntilFarthestPresynaptic
     }
+    public class Constants
+    {
+        public const string Eupm = "eupm";
+    }
 }
