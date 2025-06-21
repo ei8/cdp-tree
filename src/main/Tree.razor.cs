@@ -235,10 +235,10 @@ namespace ei8.Cortex.Diary.Plugins.Tree
 
                         Helper.ReinitializeOption(o => this.SelectedOption = o);
 
-                        if (query.TryGetValue(Constants.Eupm, out var encodedEUPM) && this.Children.Any(x => x.Neuron.Id == encodedEUPM))
+                        if (query.TryGetValue(Constants.QueryParameters.ExpandUntilPostsynapticMirrors, out var encodedEupm) && this.Children.Any(x => x.Neuron.Id == encodedEupm))
                         {
-                            this.SelectedNeuron = this.Children.FirstOrDefault(x => x.Neuron.Id == encodedEUPM);
-                            this.Expansion(ExpansionType.PostsynapticUntilExternalReferences);
+                            this.SelectedNeuron = this.Children.FirstOrDefault(x => x.Neuron.Id == encodedEupm);
+                            this.ExpandSelectedNeuron(ExpansionType.PostsynapticUntilExternalReferences);
                         }
                     }
                 }
