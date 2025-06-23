@@ -20,7 +20,7 @@ namespace ei8.Cortex.Diary.Plugins.Tree
     {
         public static class QueryParameters
         {
-            public static string ExpandUntilPostsynapticMirrors = "eupm";
+            public const string ExpandUntilPostsynapticMirrors = "eupm";
         }
     }
 }
