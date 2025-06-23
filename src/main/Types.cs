@@ -16,4 +16,11 @@ namespace ei8.Cortex.Diary.Plugins.Tree
         ExpandUntilPostsynapticExternalReferences,
         ExpandUntilFarthestPresynaptic
     }
+    public class Constants
+    {
+        public static class QueryParameters
+        {
+            public const string ExpandUntilPostsynapticMirrors = "eupm";
+        }
+    }
 }

@@ -60,26 +60,24 @@ namespace ei8.Cortex.Diary.Plugins.Tree
                     this.EditNeuron = this.SelectedNeuron.Neuron;
                     break;
                 case ContextMenuOption.ExpandUntilPostsynapticExternalReferences:
-                    this.ShowExpandModal();
-                    this.SelectedNeuron.ConfigureExpansionTimer(
-                        this.expansionTimer,
-                        ExpansionType.PostsynapticUntilExternalReferences,
-                        this.pluginSettingsService.ExpandTimeLimit,
-                        this.ExpansionTimer_Elapsed
-                    );
-                    this.SelectedNeuron.StartExpansionTimer();
+                    this.ExpandSelectedNeuron(ExpansionType.PostsynapticUntilExternalReferences);
                     break;
                 case ContextMenuOption.ExpandUntilFarthestPresynaptic:
-                    this.ShowExpandModal();
-                    this.SelectedNeuron.ConfigureExpansionTimer(
-                        this.expansionTimer,
-                        ExpansionType.FarthestPresynaptic,
-                        this.pluginSettingsService.ExpandTimeLimit,
-                        this.ExpansionTimer_Elapsed
-                    );
-                    this.SelectedNeuron.StartExpansionTimer();
+                    this.ExpandSelectedNeuron(ExpansionType.FarthestPresynaptic);
                     break;
             }
+        }
+
+        private void ExpandSelectedNeuron(ExpansionType expansionType)
+        {
+            this.ShowExpandModal();
+            this.SelectedNeuron.ConfigureExpansionTimer(
+                this.expansionTimer,
+                expansionType,
+                this.pluginSettingsService.ExpandTimeLimit,
+                this.ExpansionTimer_Elapsed
+            );
+            this.SelectedNeuron.StartExpansionTimer();
         }
 
         private async void ExpansionTimer_Elapsed(object sender, ElapsedEventArgs e)
@@ -227,15 +225,21 @@ namespace ei8.Cortex.Diary.Plugins.Tree
                             }
                         }
 
-                        await Task.Run(() =>
+                        await Task.Run(async () =>
                         {
                             this.AvatarUrl = decodedUrl;
                             this.InitialRegionNeuron = regionNeuron;
                             this.InitialPostsynapticNeurons = postsynapticNeurons;
-                            this.Reload();
+                            await this.Reload();
                         });
 
                         Helper.ReinitializeOption(o => this.SelectedOption = o);
+
+                        if (query.TryGetValue(Constants.QueryParameters.ExpandUntilPostsynapticMirrors, out var encodedEupm) && this.Children.Any(x => x.Neuron.Id == encodedEupm))
+                        {
+                            this.SelectedNeuron = this.Children.FirstOrDefault(x => x.Neuron.Id == encodedEupm);
+                            this.ExpandSelectedNeuron(ExpansionType.PostsynapticUntilExternalReferences);
+                        }
                     }
                 }
                 if (!urlSet)
