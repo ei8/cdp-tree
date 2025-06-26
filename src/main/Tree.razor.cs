@@ -190,44 +190,37 @@ namespace ei8.Cortex.Diary.Plugins.Tree
                 }
                 bool urlSet = false;
                 var query = QueryHelpers.ParseQuery(uri.Query);
-                if (query.TryGetValue("avatarUrl", out var encodedAvatarUrl))
+                if (TreeQuery.TryParse(uri.Query, out var encodedAvatarUrl))
                 {
-                    Uri uriResult;
-                    string decodedUrl = Nancy.Helpers.HttpUtility.UrlDecode(encodedAvatarUrl);
-                    bool validUrl = Uri.TryCreate(decodedUrl, UriKind.Absolute, out uriResult)
-                        && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
-                    if (validUrl)
+                    if (encodedAvatarUrl != null)
                     {
                         urlSet = true;
                         Neuron regionNeuron = null;
                         IEnumerable<Neuron> postsynapticNeurons = null;
 
-                        if (Library.Client.QueryUrl.TryParse(decodedUrl, out QueryUrl urlResult))
+                        if (encodedAvatarUrl.RegionId != null)
                         {
-                            if (query.TryGetValue("regionId", out var regionId))
-                            {
-                                regionNeuron = (await this.NeuronQueryService.GetNeuronById(
-                                    urlResult.AvatarUrl,
-                                    regionId.ToString(),
-                                    new NeuronQuery()
-                                    ))?.Items.SingleOrDefault();
-                            }
+                            regionNeuron = (await this.NeuronQueryService.GetNeuronById(
+                                encodedAvatarUrl.AvatarUrl.First(),
+                                encodedAvatarUrl.RegionId.First(),
+                                new NeuronQuery()
+                                ))?.Items.SingleOrDefault();
+                        }
 
-                            if (query.TryGetValue("postsynaptic", out var postsynaptics))
-                            {
-                                postsynapticNeurons = (await this.NeuronQueryService.GetNeurons(
-                                    urlResult.AvatarUrl,
-                                    new NeuronQuery()
-                                    {
-                                        Id = postsynaptics.ToArray()
-                                    }
-                                    ))?.Items;
-                            }
+                        if (encodedAvatarUrl.Postsynaptic!= null)
+                        {
+                            postsynapticNeurons = (await this.NeuronQueryService.GetNeurons(
+                                encodedAvatarUrl.AvatarUrl.First(),
+                                new NeuronQuery()
+                                {
+                                    Id = encodedAvatarUrl.Postsynaptic.ToArray()
+                                }
+                                ))?.Items;
                         }
 
                         await Task.Run(async () =>
                         {
-                            this.AvatarUrl = decodedUrl;
+                            this.AvatarUrl = encodedAvatarUrl.AvatarUrl.First();
                             this.InitialRegionNeuron = regionNeuron;
                             this.InitialPostsynapticNeurons = postsynapticNeurons;
                             await this.Reload();
@@ -235,9 +228,9 @@ namespace ei8.Cortex.Diary.Plugins.Tree
 
                         Helper.ReinitializeOption(o => this.SelectedOption = o);
 
-                        if (query.TryGetValue(Constants.QueryParameters.ExpandUntilPostsynapticMirrors, out var encodedEupm) && this.Children.Any(x => x.Neuron.Id == encodedEupm))
+                        if (encodedAvatarUrl.Eupm != null && this.Children.Any(x => x.Neuron.Id == encodedAvatarUrl.Eupm.First()))
                         {
-                            this.SelectedNeuron = this.Children.FirstOrDefault(x => x.Neuron.Id == encodedEupm);
+                            this.SelectedNeuron = this.Children.FirstOrDefault(x => x.Neuron.Id == encodedAvatarUrl.Eupm.First());
                             this.ExpandSelectedNeuron(ExpansionType.PostsynapticUntilExternalReferences);
                         }
                     }
