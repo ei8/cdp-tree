@@ -15,16 +15,17 @@ namespace ei8.Cortex.Diary.Plugins.Tree
     public class TreeQuery
     {
         [QueryKey(null)]
-        public IEnumerable<string> Postsynaptic { get; set; }
+        public IEnumerable<Guid> Postsynaptics { get; set; }
 
         [QueryKey(null)]
-        public IEnumerable<string> RegionId { get; set; }
+        public Guid RegionId { get; set; }
 
         [QueryKey("avatarurl")]
-        public IEnumerable<string> AvatarUrl { get; set; }
+        public string AvatarUrl { get; set; }
 
         [QueryKey("eupm")]
-        public IEnumerable<string> ExpandUntilPostsynapticMirrors { get; set; }
+        public IEnumerable<Guid> ExpandUntilPostsynapticMirrors { get; set; }
+
         [QueryKey("direction")]
         public DirectionValues? DirectionValues { get; set; }
 
@@ -33,21 +34,22 @@ namespace ei8.Cortex.Diary.Plugins.Tree
             StringBuilder stringBuilder = new StringBuilder();
             Type typeFromHandle = typeof(TreeQuery);
 
-            Postsynaptic.AppendQuery(typeFromHandle.GetQueryKey("Postsynaptic"), stringBuilder);
-            RegionId.AppendQuery(typeFromHandle.GetQueryKey("RegionId"), stringBuilder);
+            Postsynaptics?.Select(g => g.ToString()).AppendQuery(typeFromHandle.GetQueryKey("Postsynaptics"), stringBuilder);
 
-            // URL encode the AvatarUrl values when converting to string
-            AvatarUrl?.ToList().ForEach(url =>
+            if (RegionId != Guid.Empty)
             {
-                if (!string.IsNullOrEmpty(url))
-                {
-                    string encodedUrl = HttpUtility.UrlEncode(url);
-                    if (stringBuilder.Length > 0) stringBuilder.Append("&");
-                    stringBuilder.Append($"{typeFromHandle.GetQueryKey("AvatarUrl")}={encodedUrl}");
-                }
-            });
+                if (stringBuilder.Length > 0) stringBuilder.Append("&");
+                stringBuilder.Append($"{typeFromHandle.GetQueryKey("RegionId")}={RegionId}");
+            }
 
-            ExpandUntilPostsynapticMirrors.AppendQuery(typeFromHandle.GetQueryKey("ExpandUntilPostsynapticMirrors"), stringBuilder);
+            if (!string.IsNullOrEmpty(AvatarUrl))
+            {
+                if (stringBuilder.Length > 0) stringBuilder.Append("&");
+                stringBuilder.Append($"{typeFromHandle.GetQueryKey("AvatarUrl")}={HttpUtility.UrlEncode(AvatarUrl)}");
+            }
+
+            ExpandUntilPostsynapticMirrors?.Select(g => g.ToString()).AppendQuery(typeFromHandle.GetQueryKey("ExpandUntilPostsynapticMirrors"), stringBuilder);
+
             DirectionValues.AppendQuery(typeFromHandle.GetQueryKey("DirectionValues"), delegate (DirectionValues v)
             {
                 int num = (int)v;
@@ -86,18 +88,12 @@ namespace ei8.Cortex.Diary.Plugins.Tree
 
                         result = new TreeQuery
                         {
-                            Postsynaptic = array.GetQueryArrayOrDefault(typeFromHandle.GetQueryKey("Postsynaptic")),
-                            RegionId = array.GetQueryArrayOrDefault(typeFromHandle.GetQueryKey("RegionId")),
+                            Postsynaptics = ParseGuidArray(array.GetQueryArrayOrDefault(typeFromHandle.GetQueryKey("Postsynaptics"))),
+                            RegionId = ParseSingleGuid(GetQuerySingleValue(array, typeFromHandle.GetQueryKey("RegionId"))),
                             DirectionValues = array.GetNullableEnumValue<DirectionValues>(typeFromHandle.GetQueryKey("DirectionValues")),
-                            AvatarUrl = GetDecodedValues(parameters, typeFromHandle.GetQueryKey("AvatarUrl")),
-                            ExpandUntilPostsynapticMirrors = array.GetQueryArrayOrDefault(typeFromHandle.GetQueryKey("ExpandUntilPostsynapticMirrors"))
+                            AvatarUrl = HttpUtility.UrlDecode(GetQuerySingleValue(array, typeFromHandle.GetQueryKey("AvatarUrl"))),
+                            ExpandUntilPostsynapticMirrors = ParseGuidArray(array.GetQueryArrayOrDefault(typeFromHandle.GetQueryKey("ExpandUntilPostsynapticMirrors")))
                         };
-
-                        // Parse the AvatarUrl to extract additional query parameters (existing logic)
-                        if (result.AvatarUrl != null && result.AvatarUrl.Any())
-                        {
-                            ProcessAvatarUrlParameters(result, array, typeFromHandle);
-                        }
 
                         result2 = true;
                     }
@@ -163,47 +159,44 @@ namespace ei8.Cortex.Diary.Plugins.Tree
             return parameterArray;
         }
 
-        private static IEnumerable<string> GetDecodedValues(Dictionary<string, List<string>> parameters, string key)
+        private static IEnumerable<Guid> ParseGuidArray(IEnumerable<string> stringValues)
         {
-            if (parameters.ContainsKey(key))
-            {
-                // Values are already decoded in ParseQueryString method
-                return parameters[key];
-            }
-            return null;
-        }
+            if (stringValues == null)
+                return null;
 
-        private static void ProcessAvatarUrlParameters(TreeQuery result, string[] array, Type typeFromHandle)
-        {
-            foreach (string avatarUrl in result.AvatarUrl)
+            var guids = new List<Guid>();
+            foreach (string value in stringValues)
             {
-                if (Uri.TryCreate(avatarUrl, UriKind.Absolute, out Uri uri) && !string.IsNullOrEmpty(uri.Query))
+                if (Guid.TryParse(value, out Guid guid))
                 {
-                    // Parse the query string from the avatar URL
-                    string avatarQuery = uri.Query.StartsWith("?") ? uri.Query.Substring(1) : uri.Query;
-                    string[] avatarPairs = avatarQuery.Split('&');
-
-                    // Create a combined array with both original and avatar URL parameters
-                    var combinedArray = new List<string>(array);
-                    combinedArray.AddRange(avatarPairs);
-                    string[] combinedParams = combinedArray.ToArray();
-
-                    // Re-populate the result with combined parameters
-                    // Only update properties that weren't already set from the main query
-                    if (result.DirectionValues == null)
-                        result.DirectionValues = combinedParams.GetNullableEnumValue<DirectionValues>(typeFromHandle.GetQueryKey("DirectionValues"));
-
-                    // For collection properties, merge if they're empty or null
-                    if ((result.Postsynaptic == null || !result.Postsynaptic.Any()))
-                        result.Postsynaptic = combinedParams.GetQueryArrayOrDefault(typeFromHandle.GetQueryKey("Postsynaptic"));
-                    if ((result.RegionId == null || !result.RegionId.Any()))
-                        result.RegionId = combinedParams.GetQueryArrayOrDefault(typeFromHandle.GetQueryKey("RegionId"));
-                    if ((result.ExpandUntilPostsynapticMirrors == null || !result.ExpandUntilPostsynapticMirrors.Any()))
-                        result.ExpandUntilPostsynapticMirrors = combinedParams.GetQueryArrayOrDefault(typeFromHandle.GetQueryKey("ExpandUntilPostsynapticMirrors"));
-
-                    break; // Only process the first avatar URL
+                    guids.Add(guid);
                 }
             }
+            return guids.Any() ? guids : null;
+        }
+
+        private static Guid ParseSingleGuid(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+                return Guid.Empty;
+
+            return Guid.TryParse(value, out Guid guid) ? guid : Guid.Empty;
+        }
+
+        private static string GetQuerySingleValue(string[] array, string key)
+        {
+            if (string.IsNullOrEmpty(key))
+                return null;
+
+            foreach (string item in array)
+            {
+                if (item.StartsWith($"{key}=", StringComparison.OrdinalIgnoreCase))
+                {
+                    int equalIndex = item.IndexOf('=');
+                    return equalIndex > 0 ? item.Substring(equalIndex + 1) : null;
+                }
+            }
+            return null;
         }
     }
 }

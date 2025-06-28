@@ -196,31 +196,31 @@ namespace ei8.Cortex.Diary.Plugins.Tree
                     Neuron regionNeuron = null;
                     IEnumerable<Neuron> postsynapticNeurons = null;
 
-                    if (encodedAvatarUrl.RegionId != null && encodedAvatarUrl.RegionId.Any() &&
-                        encodedAvatarUrl.AvatarUrl != null && encodedAvatarUrl.AvatarUrl.Any())
+                    if (encodedAvatarUrl.RegionId != Guid.Empty &&
+                        !string.IsNullOrEmpty(encodedAvatarUrl.AvatarUrl))
                     {
                         regionNeuron = (await this.NeuronQueryService.GetNeuronById(
-                            encodedAvatarUrl.AvatarUrl.First(),
-                            encodedAvatarUrl.RegionId.First(),
+                            encodedAvatarUrl.AvatarUrl,
+                            encodedAvatarUrl.RegionId.ToString(),
                             new NeuronQuery()
                             ))?.Items.SingleOrDefault();
                     }
 
-                    if (encodedAvatarUrl.Postsynaptic != null && encodedAvatarUrl.Postsynaptic.Any() &&
-                        encodedAvatarUrl.AvatarUrl != null && encodedAvatarUrl.AvatarUrl.Any())
+                    if (encodedAvatarUrl.Postsynaptics != null && encodedAvatarUrl.Postsynaptics.Any() &&
+                        !string.IsNullOrEmpty(encodedAvatarUrl.AvatarUrl))
                     {
                         postsynapticNeurons = (await this.NeuronQueryService.GetNeurons(
-                            encodedAvatarUrl.AvatarUrl.First(),
+                            encodedAvatarUrl.AvatarUrl,
                             new NeuronQuery()
                             {
-                                Id = encodedAvatarUrl.Postsynaptic.ToArray()
+                                Id = encodedAvatarUrl.Postsynaptics.Select(g => g.ToString()).ToArray()
                             }
                             ))?.Items;
                     }
 
-                    if (encodedAvatarUrl.AvatarUrl != null && encodedAvatarUrl.AvatarUrl.Any())
+                    if (!string.IsNullOrEmpty(encodedAvatarUrl.AvatarUrl))
                     {
-                        this.AvatarUrl = encodedAvatarUrl.AvatarUrl.First();
+                        this.AvatarUrl = encodedAvatarUrl.AvatarUrl;
                         this.InitialRegionNeuron = regionNeuron;
                         this.InitialPostsynapticNeurons = postsynapticNeurons;
                         await this.Reload();
@@ -230,9 +230,9 @@ namespace ei8.Cortex.Diary.Plugins.Tree
 
                     if (encodedAvatarUrl.ExpandUntilPostsynapticMirrors != null &&
                         encodedAvatarUrl.ExpandUntilPostsynapticMirrors.Any() &&
-                        this.Children.Any(x => x.Neuron.Id == encodedAvatarUrl.ExpandUntilPostsynapticMirrors.First()))
+                        this.Children.Any(x => x.Neuron.Id == encodedAvatarUrl.ExpandUntilPostsynapticMirrors.First().ToString()))
                     {
-                        this.SelectedNeuron = this.Children.FirstOrDefault(x => x.Neuron.Id == encodedAvatarUrl.ExpandUntilPostsynapticMirrors.First());
+                        this.SelectedNeuron = this.Children.FirstOrDefault(x => x.Neuron.Id == encodedAvatarUrl.ExpandUntilPostsynapticMirrors.First().ToString());
                         this.ExpandSelectedNeuron(ExpansionType.PostsynapticUntilExternalReferences);
                     }
                 }
