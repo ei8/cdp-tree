@@ -18,7 +18,7 @@ namespace ei8.Cortex.Diary.Plugins.Tree
         public IEnumerable<Guid> Postsynaptics { get; set; }
 
         [QueryKey(null)]
-        public Guid RegionId { get; set; }
+        public Guid? RegionId { get; set; }
 
         [QueryKey("avatarurl")]
         public string AvatarUrl { get; set; }
@@ -34,23 +34,23 @@ namespace ei8.Cortex.Diary.Plugins.Tree
             StringBuilder stringBuilder = new StringBuilder();
             Type typeFromHandle = typeof(TreeQuery);
 
-            Postsynaptics?.Select(g => g.ToString()).AppendQuery(typeFromHandle.GetQueryKey("Postsynaptics"), stringBuilder);
+            this.Postsynaptics?.Select(g => g.ToString()).AppendQuery(typeFromHandle.GetQueryKey(nameof(Postsynaptics)), stringBuilder);
 
-            if (RegionId != Guid.Empty)
+            if (this.RegionId.HasValue)
             {
                 if (stringBuilder.Length > 0) stringBuilder.Append("&");
-                stringBuilder.Append($"{typeFromHandle.GetQueryKey("RegionId")}={RegionId}");
+                stringBuilder.Append($"{typeFromHandle.GetQueryKey(nameof(RegionId))}={this.RegionId.Value}");
             }
 
-            if (!string.IsNullOrEmpty(AvatarUrl))
+            if (!string.IsNullOrEmpty(this.AvatarUrl))
             {
                 if (stringBuilder.Length > 0) stringBuilder.Append("&");
-                stringBuilder.Append($"{typeFromHandle.GetQueryKey("AvatarUrl")}={HttpUtility.UrlEncode(AvatarUrl)}");
+                stringBuilder.Append($"{typeFromHandle.GetQueryKey(nameof(AvatarUrl))}={HttpUtility.UrlEncode(this.AvatarUrl)}");
             }
 
-            ExpandUntilPostsynapticMirrors?.Select(g => g.ToString()).AppendQuery(typeFromHandle.GetQueryKey("ExpandUntilPostsynapticMirrors"), stringBuilder);
+            this.ExpandUntilPostsynapticMirrors?.Select(g => g.ToString()).AppendQuery(typeFromHandle.GetQueryKey(nameof(ExpandUntilPostsynapticMirrors)), stringBuilder);
 
-            DirectionValues.AppendQuery(typeFromHandle.GetQueryKey("DirectionValues"), delegate (DirectionValues v)
+            this.DirectionValues.AppendQuery(typeFromHandle.GetQueryKey(nameof(DirectionValues)), delegate (DirectionValues v)
             {
                 int num = (int)v;
                 return num.ToString();
@@ -64,7 +64,7 @@ namespace ei8.Cortex.Diary.Plugins.Tree
             return stringBuilder.ToString();
         }
 
-        public static bool TryParse(string value, out TreeQuery result)
+        public static bool TreeQueryTryParse(string value, out TreeQuery result)
         {
             result = null;
             bool result2 = false;
@@ -74,10 +74,10 @@ namespace ei8.Cortex.Diary.Plugins.Tree
                 value = (value.StartsWith("?") ? value.Substring(1) : value);
 
                 // Parse query parameters with proper URL decoding
-                var parameters = ParseQueryString(value);
+                var parameters = TreeQueryParseQueryString(value);
 
                 // Convert dictionary to string array format for existing extension methods
-                var parameterArray = ConvertParametersToArray(parameters);
+                var parameterArray = TreeQueryConvertParametersToArray(parameters);
                 string[] array = parameterArray.ToArray();
 
                 if (array.Length != 0)
@@ -85,14 +85,20 @@ namespace ei8.Cortex.Diary.Plugins.Tree
                     try
                     {
                         Type typeFromHandle = typeof(TreeQuery);
+                        string regionIdStr = TreeQueryGetQuerySingleValue(array, typeFromHandle.GetQueryKey(nameof(RegionId)));
+                        Guid? regionId = null;
+                        if (!string.IsNullOrEmpty(regionIdStr) && Guid.TryParse(regionIdStr, out Guid parsedGuid))
+                        {
+                            regionId = parsedGuid;
+                        }
 
                         result = new TreeQuery
                         {
-                            Postsynaptics = ParseGuidArray(array.GetQueryArrayOrDefault(typeFromHandle.GetQueryKey("Postsynaptics"))),
-                            RegionId = ParseSingleGuid(GetQuerySingleValue(array, typeFromHandle.GetQueryKey("RegionId"))),
-                            DirectionValues = array.GetNullableEnumValue<DirectionValues>(typeFromHandle.GetQueryKey("DirectionValues")),
-                            AvatarUrl = HttpUtility.UrlDecode(GetQuerySingleValue(array, typeFromHandle.GetQueryKey("AvatarUrl"))),
-                            ExpandUntilPostsynapticMirrors = ParseGuidArray(array.GetQueryArrayOrDefault(typeFromHandle.GetQueryKey("ExpandUntilPostsynapticMirrors")))
+                            Postsynaptics = TreeQueryParseGuidArray(array.GetQueryArrayOrDefault(typeFromHandle.GetQueryKey(nameof(Postsynaptics)))),
+                            RegionId = regionId,
+                            DirectionValues = array.GetNullableEnumValue<DirectionValues>(typeFromHandle.GetQueryKey(nameof(DirectionValues))),
+                            AvatarUrl = HttpUtility.UrlDecode(TreeQueryGetQuerySingleValue(array, typeFromHandle.GetQueryKey(nameof(AvatarUrl)))),
+                            ExpandUntilPostsynapticMirrors = TreeQueryParseGuidArray(array.GetQueryArrayOrDefault(typeFromHandle.GetQueryKey(nameof(ExpandUntilPostsynapticMirrors))))
                         };
 
                         result2 = true;
@@ -109,7 +115,7 @@ namespace ei8.Cortex.Diary.Plugins.Tree
             return result2;
         }
 
-        private static Dictionary<string, List<string>> ParseQueryString(string queryString)
+        private static Dictionary<string, List<string>> TreeQueryParseQueryString(string queryString)
         {
             var parameters = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
             string[] pairs = queryString.Split('&');
@@ -146,7 +152,7 @@ namespace ei8.Cortex.Diary.Plugins.Tree
             return parameters;
         }
 
-        private static List<string> ConvertParametersToArray(Dictionary<string, List<string>> parameters)
+        private static List<string> TreeQueryConvertParametersToArray(Dictionary<string, List<string>> parameters)
         {
             var parameterArray = new List<string>();
             foreach (var kvp in parameters)
@@ -159,7 +165,7 @@ namespace ei8.Cortex.Diary.Plugins.Tree
             return parameterArray;
         }
 
-        private static IEnumerable<Guid> ParseGuidArray(IEnumerable<string> stringValues)
+        private static IEnumerable<Guid> TreeQueryParseGuidArray(IEnumerable<string> stringValues)
         {
             if (stringValues == null)
                 return null;
@@ -175,15 +181,7 @@ namespace ei8.Cortex.Diary.Plugins.Tree
             return guids.Any() ? guids : null;
         }
 
-        private static Guid ParseSingleGuid(string value)
-        {
-            if (string.IsNullOrEmpty(value))
-                return Guid.Empty;
-
-            return Guid.TryParse(value, out Guid guid) ? guid : Guid.Empty;
-        }
-
-        private static string GetQuerySingleValue(string[] array, string key)
+        private static string TreeQueryGetQuerySingleValue(string[] array, string key)
         {
             if (string.IsNullOrEmpty(key))
                 return null;

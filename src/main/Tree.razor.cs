@@ -190,18 +190,18 @@ namespace ei8.Cortex.Diary.Plugins.Tree
                 }
                 bool urlSet = false;
                 var query = QueryHelpers.ParseQuery(uri.Query);
-                if (TreeQuery.TryParse(uri.Query, out var encodedAvatarUrl))
+                if (TreeQuery.TreeQueryTryParse(uri.Query, out var encodedAvatarUrl))
                 {
                     urlSet = true;
                     Neuron regionNeuron = null;
                     IEnumerable<Neuron> postsynapticNeurons = null;
 
-                    if (encodedAvatarUrl.RegionId != Guid.Empty &&
+                    if (encodedAvatarUrl.RegionId.HasValue &&
                         !string.IsNullOrEmpty(encodedAvatarUrl.AvatarUrl))
                     {
                         regionNeuron = (await this.NeuronQueryService.GetNeuronById(
                             encodedAvatarUrl.AvatarUrl,
-                            encodedAvatarUrl.RegionId.ToString(),
+                            encodedAvatarUrl.RegionId.Value.ToString(),
                             new NeuronQuery()
                             ))?.Items.SingleOrDefault();
                     }

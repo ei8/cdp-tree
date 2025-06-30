@@ -6,7 +6,7 @@ using ei8.Cortex.Diary.Plugins.Tree;
 using ei8.Cortex.Graph.Common;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace cdp.test
+namespace Tree.Test
 {
     [TestClass]
     public class TreeQueryTests
@@ -21,7 +21,7 @@ namespace cdp.test
             string expectedDecodedUrl = "http://192.168.1.31.nip.io:65111/cortex/neurons?Postsynaptic=8e050fbf-1f34-443e-9f2f-241024ce57e6&relative=1&pagesize=30&sortorder=1&sortby=1";
 
             // Act
-            bool result = TreeQuery.TryParse(queryString, out TreeQuery treeQuery);
+            bool result = TreeQuery.TreeQueryTryParse(queryString, out TreeQuery treeQuery);
 
             // Assert
             Assert.IsTrue(result);
@@ -39,7 +39,7 @@ namespace cdp.test
             string expectedDecodedUrl = "http://192.168.1.31.nip.io:65111/cortex/neurons?Postsynaptic=8e050fbf-1f34-443e-9f2f-241024ce57e6&relative=1&pagesize=30&sortorder=1&sortby=1";
 
             // Act
-            bool result = TreeQuery.TryParse(queryString, out TreeQuery treeQuery);
+            bool result = TreeQuery.TreeQueryTryParse(queryString, out TreeQuery treeQuery);
 
             // Assert
             Assert.IsTrue(result);
@@ -55,7 +55,7 @@ namespace cdp.test
             string queryString = "avatarurl=invalid%url";
 
             // Act
-            bool result = TreeQuery.TryParse(queryString, out TreeQuery treeQuery);
+            bool result = TreeQuery.TreeQueryTryParse(queryString, out TreeQuery treeQuery);
 
             // Assert
             Assert.IsTrue(result); // Should still parse, just with the decoded invalid URL
@@ -71,7 +71,7 @@ namespace cdp.test
             string queryString = "avatarurl=";
 
             // Act
-            bool result = TreeQuery.TryParse(queryString, out TreeQuery treeQuery);
+            bool result = TreeQuery.TreeQueryTryParse(queryString, out TreeQuery treeQuery);
 
             // Assert
             Assert.IsTrue(result);
@@ -124,7 +124,7 @@ namespace cdp.test
             string queryString = "direction=1";
 
             // Act
-            bool result = TreeQuery.TryParse(queryString, out TreeQuery treeQuery);
+            bool result = TreeQuery.TreeQueryTryParse(queryString, out TreeQuery treeQuery);
 
             // Assert
             Assert.IsTrue(result);
@@ -154,7 +154,7 @@ namespace cdp.test
             string queryString = "direction=invalid";
 
             // Act
-            bool result = TreeQuery.TryParse(queryString, out TreeQuery treeQuery);
+            bool result = TreeQuery.TreeQueryTryParse(queryString, out TreeQuery treeQuery);
 
             // Assert
             Assert.IsFalse(result); // Should return false for invalid enum value
@@ -173,12 +173,13 @@ namespace cdp.test
             string queryString = $"regionid={expectedGuid}";
 
             // Act
-            bool result = TreeQuery.TryParse(queryString, out TreeQuery treeQuery);
+            bool result = TreeQuery.TreeQueryTryParse(queryString, out TreeQuery treeQuery);
 
             // Assert
             Assert.IsTrue(result);
             Assert.IsNotNull(treeQuery);
-            Assert.AreEqual(expectedGuid, treeQuery.RegionId);
+            Assert.IsTrue(treeQuery.RegionId.HasValue);
+            Assert.AreEqual(expectedGuid, treeQuery.RegionId.Value);
         }
 
         [TestMethod]
@@ -198,18 +199,32 @@ namespace cdp.test
         }
 
         [TestMethod]
-        public void TryParse_WithInvalidRegionId_ShouldReturnEmptyGuid()
+        public void TryParse_WithInvalidRegionId_ShouldReturnNullRegionId()
         {
             // Arrange
             string queryString = "regionid=invalid-guid";
 
             // Act
-            bool result = TreeQuery.TryParse(queryString, out TreeQuery treeQuery);
+            bool result = TreeQuery.TreeQueryTryParse(queryString, out TreeQuery treeQuery);
 
             // Assert
             Assert.IsTrue(result);
             Assert.IsNotNull(treeQuery);
-            Assert.AreEqual(Guid.Empty, treeQuery.RegionId);
+            Assert.IsFalse(treeQuery.RegionId.HasValue);
+        }
+
+        [TestMethod]
+        public void ToString_WithNullRegionId_ShouldNotIncludeRegionId()
+        {
+            // Arrange
+            var treeQuery = new TreeQuery();
+            treeQuery.RegionId = null;
+
+            // Act
+            string result = treeQuery.ToString();
+
+            // Assert
+            Assert.IsFalse(result.Contains("RegionId="));
         }
 
         #endregion
@@ -225,7 +240,7 @@ namespace cdp.test
             string queryString = $"postsynaptics={guid1}&postsynaptics={guid2}";
 
             // Act
-            bool result = TreeQuery.TryParse(queryString, out TreeQuery treeQuery);
+            bool result = TreeQuery.TreeQueryTryParse(queryString, out TreeQuery treeQuery);
 
             // Assert
             Assert.IsTrue(result);
@@ -262,7 +277,7 @@ namespace cdp.test
             string queryString = $"postsynaptics={validGuid}&postsynaptics=invalid-guid";
 
             // Act
-            bool result = TreeQuery.TryParse(queryString, out TreeQuery treeQuery);
+            bool result = TreeQuery.TreeQueryTryParse(queryString, out TreeQuery treeQuery);
 
             // Assert
             Assert.IsTrue(result);
@@ -285,7 +300,7 @@ namespace cdp.test
             string queryString = $"eupm={guid1}&eupm={guid2}";
 
             // Act
-            bool result = TreeQuery.TryParse(queryString, out TreeQuery treeQuery);
+            bool result = TreeQuery.TreeQueryTryParse(queryString, out TreeQuery treeQuery);
 
             // Assert
             Assert.IsTrue(result);
@@ -322,7 +337,7 @@ namespace cdp.test
             string queryString = $"eupm={validGuid}&eupm=invalid-guid";
 
             // Act
-            bool result = TreeQuery.TryParse(queryString, out TreeQuery treeQuery);
+            bool result = TreeQuery.TreeQueryTryParse(queryString, out TreeQuery treeQuery);
 
             // Assert
             Assert.IsTrue(result);
@@ -340,13 +355,13 @@ namespace cdp.test
         public void TryParse_WithNullOrEmptyString_ShouldReturnFalse()
         {
             // Arrange & Act & Assert
-            Assert.IsFalse(TreeQuery.TryParse(null, out TreeQuery result1));
+            Assert.IsFalse(TreeQuery.TreeQueryTryParse(null, out TreeQuery result1));
             Assert.IsNull(result1);
 
-            Assert.IsFalse(TreeQuery.TryParse("", out TreeQuery result2));
+            Assert.IsFalse(TreeQuery.TreeQueryTryParse("", out TreeQuery result2));
             Assert.IsNull(result2);
 
-            Assert.IsFalse(TreeQuery.TryParse("   ", out TreeQuery result3));
+            Assert.IsFalse(TreeQuery.TreeQueryTryParse("   ", out TreeQuery result3));
             Assert.IsNull(result3);
         }
 
@@ -357,7 +372,7 @@ namespace cdp.test
             string malformedQuery = "avatarurl=test&=value&noequals&another=";
 
             // Act
-            bool result = TreeQuery.TryParse(malformedQuery, out TreeQuery treeQuery);
+            bool result = TreeQuery.TreeQueryTryParse(malformedQuery, out TreeQuery treeQuery);
 
             // Assert
             Assert.IsTrue(result);
@@ -373,7 +388,7 @@ namespace cdp.test
             string queryString = "?";
 
             // Act
-            bool result = TreeQuery.TryParse(queryString, out TreeQuery treeQuery);
+            bool result = TreeQuery.TreeQueryTryParse(queryString, out TreeQuery treeQuery);
 
             // Assert
             Assert.IsFalse(result);
@@ -403,7 +418,7 @@ namespace cdp.test
             string originalQuery = $"avatarurl=http%3A%2F%2Ftest.com%2Fpath%3Fparam%3Dvalue&direction=1&regionid={regionGuid}&postsynaptics={postsynapticGuid}&eupm={eupmGuid}";
 
             // Act
-            bool parseResult = TreeQuery.TryParse(originalQuery, out TreeQuery treeQuery);
+            bool parseResult = TreeQuery.TreeQueryTryParse(originalQuery, out TreeQuery treeQuery);
             string reconstructedQuery = treeQuery.ToString();
 
             // Assert
@@ -411,7 +426,7 @@ namespace cdp.test
             Assert.IsNotNull(treeQuery);
 
             // Parse the reconstructed query to verify it produces the same object
-            bool reparseResult = TreeQuery.TryParse(reconstructedQuery, out TreeQuery reparsedQuery);
+            bool reparseResult = TreeQuery.TreeQueryTryParse(reconstructedQuery, out TreeQuery reparsedQuery);
             Assert.IsTrue(reparseResult);
 
             // Verify key properties are maintained
@@ -440,7 +455,7 @@ namespace cdp.test
                                 $"&eupm={eupmGuid1}&eupm={eupmGuid2}";
 
             // Act
-            bool result = TreeQuery.TryParse(complexQuery, out TreeQuery treeQuery);
+            bool result = TreeQuery.TreeQueryTryParse(complexQuery, out TreeQuery treeQuery);
 
             // Assert
             Assert.IsTrue(result);
