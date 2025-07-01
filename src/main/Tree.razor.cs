@@ -190,7 +190,7 @@ namespace ei8.Cortex.Diary.Plugins.Tree
                 }
                 bool urlSet = false;
                 var query = QueryHelpers.ParseQuery(uri.Query);
-                if (TreeQuery.TreeQueryTryParse(uri.Query, out var encodedAvatarUrl))
+                if (TreeQuery.TryParse(uri.Query, out var encodedAvatarUrl))
                 {
                     urlSet = true;
                     Neuron regionNeuron = null;
