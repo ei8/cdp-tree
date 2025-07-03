@@ -32,37 +32,45 @@ namespace ei8.Cortex.Diary.Plugins.Tree
 
         public override string ToString()
         {
-            StringBuilder stringBuilder = new StringBuilder();
+            var queryParams = new NameValueCollection();
             Type typeFromHandle = typeof(TreeQuery);
 
-            this.Postsynaptics?.Select(g => g.ToString()).AppendQuery(typeFromHandle.GetQueryKey(nameof(Postsynaptics)), stringBuilder);
+            if (this.Postsynaptics?.Any() == true)
+            {
+                queryParams.Add(typeFromHandle.GetQueryKey(nameof(Postsynaptics)),
+                    string.Join(",", this.Postsynaptics.Select(g => g.ToString())));
+            }
 
             if (this.RegionId.HasValue)
             {
-                if (stringBuilder.Length > 0) stringBuilder.Append("&");
-                stringBuilder.Append($"{typeFromHandle.GetQueryKey(nameof(RegionId))}={this.RegionId.Value}");
+                queryParams.Add(typeFromHandle.GetQueryKey(nameof(RegionId)),
+                    this.RegionId.Value.ToString());
             }
 
             if (!string.IsNullOrEmpty(this.AvatarUrl))
             {
-                if (stringBuilder.Length > 0) stringBuilder.Append("&");
-                stringBuilder.Append($"{typeFromHandle.GetQueryKey(nameof(AvatarUrl))}={HttpUtility.UrlEncode(this.AvatarUrl)}");
+                queryParams.Add(typeFromHandle.GetQueryKey(nameof(AvatarUrl)),
+                    HttpUtility.UrlEncode(this.AvatarUrl));
             }
 
-            this.ExpandUntilPostsynapticMirrors?.Select(g => g.ToString()).AppendQuery(typeFromHandle.GetQueryKey(nameof(ExpandUntilPostsynapticMirrors)), stringBuilder);
-
-            this.DirectionValues.AppendQuery(typeFromHandle.GetQueryKey(nameof(DirectionValues)), delegate (DirectionValues v)
+            if (this.ExpandUntilPostsynapticMirrors?.Any() == true)
             {
-                int num = (int)v;
-                return num.ToString();
-            }, stringBuilder);
-
-            if (stringBuilder.Length > 0)
-            {
-                stringBuilder.Insert(0, '?');
+                queryParams.Add(typeFromHandle.GetQueryKey(nameof(ExpandUntilPostsynapticMirrors)),
+                    string.Join(",", this.ExpandUntilPostsynapticMirrors.Select(g => g.ToString())));
             }
 
-            return stringBuilder.ToString();
+            if (this.DirectionValues.HasValue)
+            {
+                queryParams.Add(typeFromHandle.GetQueryKey(nameof(DirectionValues)),
+                    ((int)this.DirectionValues.Value).ToString());
+            }
+
+            var queryString = string.Join("&",
+                queryParams.AllKeys.Select(key =>
+                    $"{key}={queryParams[key]}"
+                ));
+
+            return queryString.Length > 0 ? "?" + queryString : string.Empty;
         }
 
         public static bool TryParse(string value, out TreeQuery result)
@@ -96,7 +104,7 @@ namespace ei8.Cortex.Diary.Plugins.Tree
                         {
                             Postsynaptics = postsynapticValues?.Select(s => Guid.Parse(s)),
                             RegionId = regionId,
-                            DirectionValues = GetNullableEnumValue<DirectionValues>(parameters, typeFromHandle.GetQueryKey(nameof(DirectionValues))),
+                            DirectionValues = TreeQuery.GetNullableEnumValue<DirectionValues>(parameters, typeFromHandle.GetQueryKey(nameof(DirectionValues))),
                             AvatarUrl = parameters[typeFromHandle.GetQueryKey(nameof(AvatarUrl))],
                             ExpandUntilPostsynapticMirrors = expandValues?.Select(s => Guid.Parse(s))
                         };
