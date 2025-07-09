@@ -37,8 +37,10 @@ namespace ei8.Cortex.Diary.Plugins.Tree
 
             if (this.Postsynaptics?.Any() == true)
             {
-                queryParams.Add(typeFromHandle.GetQueryKey(nameof(Postsynaptics)),
-                    string.Join(",", this.Postsynaptics.Select(g => g.ToString())));
+                foreach (var guid in this.Postsynaptics)
+                {
+                    queryParams.Add(typeFromHandle.GetQueryKey(nameof(Postsynaptics)), guid.ToString());
+                }
             }
 
             if (this.RegionId.HasValue)
@@ -55,8 +57,10 @@ namespace ei8.Cortex.Diary.Plugins.Tree
 
             if (this.ExpandUntilPostsynapticMirrors?.Any() == true)
             {
-                queryParams.Add(typeFromHandle.GetQueryKey(nameof(ExpandUntilPostsynapticMirrors)),
-                    string.Join(",", this.ExpandUntilPostsynapticMirrors.Select(g => g.ToString())));
+                foreach (var guid in this.ExpandUntilPostsynapticMirrors)
+                {
+                    queryParams.Add(typeFromHandle.GetQueryKey(nameof(ExpandUntilPostsynapticMirrors)), guid.ToString());
+                }
             }
 
             if (this.DirectionValues.HasValue)
@@ -66,9 +70,9 @@ namespace ei8.Cortex.Diary.Plugins.Tree
             }
 
             var queryString = string.Join("&",
-                queryParams.AllKeys.Select(key =>
-                    $"{key}={queryParams[key]}"
-                ));
+                from key in queryParams.AllKeys
+                from value in queryParams.GetValues(key)
+                select $"{key}={value}");
 
             return queryString.Length > 0 ? "?" + queryString : string.Empty;
         }
