@@ -190,56 +190,50 @@ namespace ei8.Cortex.Diary.Plugins.Tree
                 }
                 bool urlSet = false;
                 var query = QueryHelpers.ParseQuery(uri.Query);
-                if (query.TryGetValue("avatarUrl", out var encodedAvatarUrl))
+                if (TreeQuery.TryParse(uri.Query, out var encodedAvatarUrl))
                 {
-                    Uri uriResult;
-                    string decodedUrl = Nancy.Helpers.HttpUtility.UrlDecode(encodedAvatarUrl);
-                    bool validUrl = Uri.TryCreate(decodedUrl, UriKind.Absolute, out uriResult)
-                        && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
-                    if (validUrl)
+                    urlSet = true;
+                    Neuron regionNeuron = null;
+                    IEnumerable<Neuron> postsynapticNeurons = null;
+
+                    if (encodedAvatarUrl.RegionId.HasValue &&
+                        !string.IsNullOrEmpty(encodedAvatarUrl.AvatarUrl))
                     {
-                        urlSet = true;
-                        Neuron regionNeuron = null;
-                        IEnumerable<Neuron> postsynapticNeurons = null;
+                        regionNeuron = (await this.NeuronQueryService.GetNeuronById(
+                            encodedAvatarUrl.AvatarUrl,
+                            encodedAvatarUrl.RegionId.Value.ToString(),
+                            new NeuronQuery()
+                            ))?.Items.SingleOrDefault();
+                    }
 
-                        if (Library.Client.QueryUrl.TryParse(decodedUrl, out QueryUrl urlResult))
-                        {
-                            if (query.TryGetValue("regionId", out var regionId))
+                    if (encodedAvatarUrl.Postsynaptics != null && encodedAvatarUrl.Postsynaptics.Any() &&
+                        !string.IsNullOrEmpty(encodedAvatarUrl.AvatarUrl))
+                    {
+                        postsynapticNeurons = (await this.NeuronQueryService.GetNeurons(
+                            encodedAvatarUrl.AvatarUrl,
+                            new NeuronQuery()
                             {
-                                regionNeuron = (await this.NeuronQueryService.GetNeuronById(
-                                    urlResult.AvatarUrl,
-                                    regionId.ToString(),
-                                    new NeuronQuery()
-                                    ))?.Items.SingleOrDefault();
+                                Id = encodedAvatarUrl.Postsynaptics.Select(g => g.ToString()).ToArray()
                             }
+                            ))?.Items;
+                    }
 
-                            if (query.TryGetValue("postsynaptic", out var postsynaptics))
-                            {
-                                postsynapticNeurons = (await this.NeuronQueryService.GetNeurons(
-                                    urlResult.AvatarUrl,
-                                    new NeuronQuery()
-                                    {
-                                        Id = postsynaptics.ToArray()
-                                    }
-                                    ))?.Items;
-                            }
-                        }
+                    if (!string.IsNullOrEmpty(encodedAvatarUrl.AvatarUrl))
+                    {
+                        this.AvatarUrl = encodedAvatarUrl.AvatarUrl;
+                        this.InitialRegionNeuron = regionNeuron;
+                        this.InitialPostsynapticNeurons = postsynapticNeurons;
+                        await this.Reload();
+                    }
 
-                        await Task.Run(async () =>
-                        {
-                            this.AvatarUrl = decodedUrl;
-                            this.InitialRegionNeuron = regionNeuron;
-                            this.InitialPostsynapticNeurons = postsynapticNeurons;
-                            await this.Reload();
-                        });
+                    Helper.ReinitializeOption(o => this.SelectedOption = o);
 
-                        Helper.ReinitializeOption(o => this.SelectedOption = o);
-
-                        if (query.TryGetValue(Constants.QueryParameters.ExpandUntilPostsynapticMirrors, out var encodedEupm) && this.Children.Any(x => x.Neuron.Id == encodedEupm))
-                        {
-                            this.SelectedNeuron = this.Children.FirstOrDefault(x => x.Neuron.Id == encodedEupm);
-                            this.ExpandSelectedNeuron(ExpansionType.PostsynapticUntilExternalReferences);
-                        }
+                    if (encodedAvatarUrl.ExpandUntilPostsynapticMirrors != null &&
+                        encodedAvatarUrl.ExpandUntilPostsynapticMirrors.Any() &&
+                        this.Children.Any(x => x.Neuron.Id == encodedAvatarUrl.ExpandUntilPostsynapticMirrors.First().ToString()))
+                    {
+                        this.SelectedNeuron = this.Children.FirstOrDefault(x => x.Neuron.Id == encodedAvatarUrl.ExpandUntilPostsynapticMirrors.First().ToString());
+                        this.ExpandSelectedNeuron(ExpansionType.PostsynapticUntilExternalReferences);
                     }
                 }
                 if (!urlSet)
