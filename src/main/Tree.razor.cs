@@ -35,6 +35,7 @@ namespace ei8.Cortex.Diary.Plugins.Tree
         private IEnumerable<MirrorConfigFile> mirrorConfigFiles;
 
         private bool IsExpandModalVisible { get; set; }
+        private bool IsSvgViewVisible { get; set; } = true;
 
         public Tree()
         {
@@ -142,6 +143,20 @@ namespace ei8.Cortex.Diary.Plugins.Tree
                 RenderDirectionValue.TopToBottom;
 
             this.optionsDropdown.Hide();
+        }
+
+        private async void ToggleSvgView()
+        {
+            this.IsSvgViewVisible = !this.IsSvgViewVisible;
+            this.StateHasChanged();
+            
+            // If we're making the SVG view visible, reload the graph after DOM update
+            if (this.IsSvgViewVisible)
+            {
+                // Wait for the DOM to update before loading the graph
+                await Task.Delay(100);
+                await this.LoadGraph();
+            }
         }
 
         [JSInvokable]
