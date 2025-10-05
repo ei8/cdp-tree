@@ -149,14 +149,6 @@ namespace ei8.Cortex.Diary.Plugins.Tree
         {
             this.IsGraphViewVisible = !this.IsGraphViewVisible;
             this.StateHasChanged();
-            
-            // If we're making the graph view visible, reload the graph after DOM update
-            if (this.IsGraphViewVisible)
-            {
-                // Wait for the DOM to update before loading the graph
-                await Task.Delay(100);
-                await this.LoadGraph();
-            }
         }
 
         [JSInvokable]
