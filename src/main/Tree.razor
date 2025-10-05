@@ -44,8 +44,8 @@
         <button class="btn btn-light btn-sm rounded-circle ml-1" @onclick="this.LoadGraph" style="height:32px; width:32px" title="Load Graph">
             <Blazorise.Icon Name="FontAwesomeIcons.CodeBranch" />
         </button>
-        <button class="btn btn-light btn-sm rounded-circle ml-1" @onclick="this.ToggleSvgView" style="height:32px; width:32px" title="@(IsSvgViewVisible ? "Hide Graph View" : "Show Graph View")">
-            <Blazorise.Icon Name="@(IsSvgViewVisible ? FontAwesomeIcons.EyeSlash : FontAwesomeIcons.Eye)" />
+        <button class="btn btn-light btn-sm rounded-circle ml-1" @onclick="this.ToggleGraphView" style="height:32px; width:32px" title="@(IsGraphViewVisible ? "Hide Graph View" : "Show Graph View")">
+            <Blazorise.Icon Name="@(this.IsGraphViewVisible ? FontAwesomeIcons.EyeSlash : FontAwesomeIcons.Eye)" />
         </button>
         <Dropdown RightAligned="true" @ref="this.optionsDropdown">
             <button class="btn btn-light btn-sm ml-1 rounded-circle" @onclick="this.ShowOptionsMenu" title="Options">
@@ -108,7 +108,7 @@ else
                 <TreeView AvatarUrl="@this.AvatarUrl" Children="@this.Children" @bind-SelectedNeuron="@this.SelectedNeuron" OnMenuRequested="@this.MenuRequested" OnInfoRequested="@this.InfoRequested"
                     @bind-ControlsEnabled="@this.ControlsEnabled" @bind-RenderDirection="@this.RenderDirection" />
             </div>
-            @if (IsSvgViewVisible)
+            @if (this.IsGraphViewVisible)
             {
                 <div class="treecontent-item sticky-top" style="z-index:0">
                     <div class="sticky-top" style="z-index:0">
