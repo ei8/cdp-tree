@@ -108,7 +108,7 @@ else
                 <TreeView AvatarUrl="@this.AvatarUrl" Children="@this.Children" @bind-SelectedNeuron="@this.SelectedNeuron" OnMenuRequested="@this.MenuRequested" OnInfoRequested="@this.InfoRequested"
                     @bind-ControlsEnabled="@this.ControlsEnabled" @bind-RenderDirection="@this.RenderDirection" />
             </div>
-                <div class="treecontent-item sticky-top" style="z-index:0; @(IsGraphViewVisible ? "" : "display:none")">
+                <div class="treecontent-item sticky-top" style="z-index:0; @(this.IsGraphViewVisible ? "" : "display:none")">
                     <div class="sticky-top" style="z-index:0">
                         <div class="modal modal-context" id="modal" style="height: 50px">
                             <div class="modal-body p-1">
