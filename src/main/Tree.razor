@@ -44,6 +44,9 @@
         <button class="btn btn-light btn-sm rounded-circle ml-1" @onclick="this.LoadGraph" style="height:32px; width:32px" title="Load Graph">
             <Blazorise.Icon Name="FontAwesomeIcons.CodeBranch" />
         </button>
+        <button class="btn btn-light btn-sm rounded-circle ml-1" @onclick="this.ToggleGraphView" style="height:32px; width:32px" title="@(IsGraphViewVisible ? "Hide Graph View" : "Show Graph View")">
+            <Blazorise.Icon Name="@(this.IsGraphViewVisible ? FontAwesomeIcons.EyeSlash : FontAwesomeIcons.Eye)" />
+        </button>
         <Dropdown RightAligned="true" @ref="this.optionsDropdown">
             <button class="btn btn-light btn-sm ml-1 rounded-circle" @onclick="this.ShowOptionsMenu" title="Options">
                 <Blazorise.Icon Name="FontAwesomeIcons.EllipsisV" Class="px-1" />
@@ -105,21 +108,21 @@ else
                 <TreeView AvatarUrl="@this.AvatarUrl" Children="@this.Children" @bind-SelectedNeuron="@this.SelectedNeuron" OnMenuRequested="@this.MenuRequested" OnInfoRequested="@this.InfoRequested"
                     @bind-ControlsEnabled="@this.ControlsEnabled" @bind-RenderDirection="@this.RenderDirection" />
             </div>
-            <div class="treecontent-item sticky-top" style="z-index:0">
-                <div class="sticky-top" style="z-index:0">
-                    <div class="modal modal-context" id="modal" style="height: 50px">
-                        <div class="modal-body p-1">
-                            <ul class="modal-list">
-                                <li class="InnerOption" id="contextmenu">
-                                    Link
-                                </li>
-                            </ul>
+                <div class="treecontent-item sticky-top" style="z-index:0; @(this.IsGraphViewVisible ? "" : "display:none")">
+                    <div class="sticky-top" style="z-index:0">
+                        <div class="modal modal-context" id="modal" style="height: 50px">
+                            <div class="modal-body p-1">
+                                <ul class="modal-list">
+                                    <li class="InnerOption" id="contextmenu">
+                                        Link
+                                    </li>
+                                </ul>
+                            </div>
                         </div>
+                        <span class="progress spinner-border text-primary none"></span>
+                        <svg class="svgview" />
                     </div>
-                    <span class="progress spinner-border text-primary none"></span>
-                    <svg class="svgview" />
                 </div>
-            </div>
         </div>
     </div>
 }

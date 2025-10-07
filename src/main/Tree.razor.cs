@@ -35,6 +35,7 @@ namespace ei8.Cortex.Diary.Plugins.Tree
         private IEnumerable<MirrorConfigFile> mirrorConfigFiles;
 
         private bool IsExpandModalVisible { get; set; }
+        private bool IsGraphViewVisible { get; set; } = true;
 
         public Tree()
         {
@@ -142,6 +143,12 @@ namespace ei8.Cortex.Diary.Plugins.Tree
                 RenderDirectionValue.TopToBottom;
 
             this.optionsDropdown.Hide();
+        }
+
+        private async void ToggleGraphView()
+        {
+            this.IsGraphViewVisible = !this.IsGraphViewVisible;
+            this.StateHasChanged();
         }
 
         [JSInvokable]
