@@ -522,14 +522,20 @@ namespace ei8.Cortex.Diary.Plugins.Tree
 
         private static void ExtractNodes(IEnumerable<TreeNeuronViewModel> children, List<Node> allNodes)
         {
-            allNodes.AddRange(children.Select(c => new Node
-            {
-                id = c.Neuron.Id,
-                tag = !string.IsNullOrWhiteSpace(c.Neuron.Tag) ?
-                    c.Neuron.Tag :
-                    !string.IsNullOrWhiteSpace(c.Neuron.ExternalReferenceUrl) ?
-                        c.GetMirrorKeys().FirstOrDefault()?.Item1 :
-                        string.Empty
+            allNodes.AddRange(children.Select(c => {
+                var childMirrorKeys = c.GetMirrorKeys();
+                return new Node
+                {
+                    id = c.Neuron.Id,
+                    tag = !string.IsNullOrWhiteSpace(c.Neuron.Tag) ?
+                        c.Neuron.Tag :
+                        !string.IsNullOrWhiteSpace(c.Neuron.ExternalReferenceUrl) ?
+                            string.Join(
+                                Environment.NewLine, 
+                                childMirrorKeys.Any() ? childMirrorKeys.First().Keys : Array.Empty<string>()
+                            ) :
+                            string.Empty
+                };
             }).ToArray());
 
             children.ToList().ForEach(c => Tree.ExtractNodes(c.Children, allNodes));
